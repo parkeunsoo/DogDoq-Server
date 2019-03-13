@@ -4,7 +4,7 @@ var fs = require("fs");
 
 var fabric_client = new Fabric_Client();
 var capeer1Path =
-  "../dogdoq-network/crypto-config/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/tls/ca.crt";
+  "../DogDoq-Network/crypto-config/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/tls/ca.crt";
 let data1 = fs.readFileSync(capeer1Path);
 let capeer1 = Buffer.from(data1).toString();
 var peer1 = fabric_client.newPeer("grpcs://0.0.0.0:7051", {
@@ -12,7 +12,7 @@ var peer1 = fabric_client.newPeer("grpcs://0.0.0.0:7051", {
   "ssl-target-name-override": "peer0.org1.example.com:7051"
 });
 var capeer2Path =
-  "../dogdoq-network/crypto-config/peerOrganizations/org2.example.com/peers/peer0.org2.example.com/tls/ca.crt";
+  "../DogDoq-Network/crypto-config/peerOrganizations/org2.example.com/peers/peer0.org2.example.com/tls/ca.crt";
 let data2 = fs.readFileSync(capeer2Path);
 let capeer2 = Buffer.from(data2).toString();
 var peer2 = fabric_client.newPeer("grpcs://0.0.0.0:8051", {
@@ -20,7 +20,7 @@ var peer2 = fabric_client.newPeer("grpcs://0.0.0.0:8051", {
   "ssl-target-name-override": "peer0.org2.example.com:8051"
 });
 var capeer3Path =
-  "../dogdoq-network/crypto-config/peerOrganizations/org3.example.com/peers/peer0.org3.example.com/tls/ca.crt";
+  "../DogDoq-Network/crypto-config/peerOrganizations/org3.example.com/peers/peer0.org3.example.com/tls/ca.crt";
 let data3 = fs.readFileSync(capeer3Path);
 let capeer3 = Buffer.from(data3).toString();
 var peer3 = fabric_client.newPeer("grpcs://0.0.0.0:9051", {
@@ -28,7 +28,7 @@ var peer3 = fabric_client.newPeer("grpcs://0.0.0.0:9051", {
   "ssl-target-name-override": "peer0.org3.example.com:9051"
 });
 var capeer4Path =
-  "../dogdoq-network/crypto-config/peerOrganizations/org4.example.com/peers/peer0.org4.example.com/tls/ca.crt";
+  "../DogDoq-Network/crypto-config/peerOrganizations/org4.example.com/peers/peer0.org4.example.com/tls/ca.crt";
 let data4 = fs.readFileSync(capeer4Path);
 let capeer4 = Buffer.from(data4).toString();
 var peer4 = fabric_client.newPeer("grpcs://0.0.0.0:10051", {

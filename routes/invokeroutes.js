@@ -6,7 +6,7 @@ var fabric_client = new Fabric_Client();
 
 var tx_id = null;
 var capeer1Path =
-  "../dogdoq-network/crypto-config/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/tls/ca.crt";
+  "../DogDoq-Network/crypto-config/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/tls/ca.crt";
 let data1 = fs.readFileSync(capeer1Path);
 let capeer1 = Buffer.from(data1).toString();
 var peer1 = fabric_client.newPeer("grpcs://0.0.0.0:7051", {
@@ -14,7 +14,7 @@ var peer1 = fabric_client.newPeer("grpcs://0.0.0.0:7051", {
   "ssl-target-name-override": "peer0.org1.example.com:7051"
 });
 var capeer2Path =
-  "../dogdoq-network/crypto-config/peerOrganizations/org2.example.com/peers/peer0.org2.example.com/tls/ca.crt";
+  "../DogDoq-Network/crypto-config/peerOrganizations/org2.example.com/peers/peer0.org2.example.com/tls/ca.crt";
 let data2 = fs.readFileSync(capeer2Path);
 let capeer2 = Buffer.from(data2).toString();
 var peer2 = fabric_client.newPeer("grpcs://0.0.0.0:8051", {
@@ -22,7 +22,7 @@ var peer2 = fabric_client.newPeer("grpcs://0.0.0.0:8051", {
   "ssl-target-name-override": "peer0.org2.example.com:8051"
 });
 var capeer3Path =
-  "../dogdoq-network/crypto-config/peerOrganizations/org3.example.com/peers/peer0.org3.example.com/tls/ca.crt";
+  "../DogDoq-Network/crypto-config/peerOrganizations/org3.example.com/peers/peer0.org3.example.com/tls/ca.crt";
 let data3 = fs.readFileSync(capeer3Path);
 let capeer3 = Buffer.from(data3).toString();
 var peer3 = fabric_client.newPeer("grpcs://0.0.0.0:9051", {
@@ -30,7 +30,7 @@ var peer3 = fabric_client.newPeer("grpcs://0.0.0.0:9051", {
   "ssl-target-name-override": "peer0.org3.example.com:9051"
 });
 var caordererPath =
-  "../dogdoq-network/crypto-config/ordererOrganizations/example.com/orderers/orderer.example.com/msp/tlscacerts/tlsca.example.com-cert.pem";
+  "../DogDoq-Network/crypto-config/ordererOrganizations/example.com/orderers/orderer.example.com/msp/tlscacerts/tlsca.example.com-cert.pem";
 let dataorder = fs.readFileSync(caordererPath);
 let caorderer = Buffer.from(dataorder).toString();
 var order = fabric_client.newOrderer("grpcs://localhost:7050", {
