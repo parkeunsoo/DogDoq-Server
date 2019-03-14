@@ -11,7 +11,7 @@ exports.register = function(req, res) {
       password: req.body.password
     };
     msp = "Org4MSP";
-    var store_path = path.join(__dirname, "../hfc-key-store4");
+    var store_path = path.join(__dirname, "../인증서_DogDoq");
   } else {
     var users = {
       email: req.body.email,
@@ -20,13 +20,13 @@ exports.register = function(req, res) {
     };
     if (req.body.kind == "user1") {
       msp = "Org1MSP";
-      var store_path = path.join(__dirname, "../hfc-key-store");
+      var store_path = path.join(__dirname, "../인증서_펫샵");
     } else if (req.body.kind == "user2") {
       msp = "Org2MSP";
-      var store_path = path.join(__dirname, "../hfc-key-store2");
+      var store_path = path.join(__dirname, "../인증서_농장");
     } else if (req.body.kind == "user3") {
       msp = "Org3MSP";
-      var store_path = path.join(__dirname, "../hfc-key-store3");
+      var store_path = path.join(__dirname, "../인증서_병원");
     }
   }
 
@@ -55,13 +55,12 @@ exports.register = function(req, res) {
         failed: "error ocurred"
       });
     } else {
-      console.log("결과는:",results);
       Fabric_Client.newDefaultKeyValueStore({ path: store_path })
         .then(state_store => {
-        // fabric-client의 폴더 설정
+        // fabric_client의 폴더 설정
           fabric_client.setStateStore(state_store);
           var crypto_suite = Fabric_Client.newCryptoSuite();
-        // fabric-client SDK가 설정해놓은 폴더에 있는 인증서 정보를 fabric_client에서 활용
+        // fabric_client SDK가 설정해놓은 폴더에 있는 인증서 정보를 fabric_client에서 활용
           var crypto_store = Fabric_Client.newCryptoKeyStore({
             path: store_path
           });
@@ -133,7 +132,7 @@ exports.register = function(req, res) {
         })
         .then(enrollment => {
           console.log(
-            "Successfully enrolled member user" + req.body.email + msp
+            "회원을 CA서버에 성공적으로 등록했습니다." + req.body.email + msp
           );
           // 비밀정보를 이용하여 회원의 저장소에 인증서 생성
           return fabric_client.createUser({
@@ -156,7 +155,7 @@ exports.register = function(req, res) {
           );
         })
         .catch(err => {
-          console.error("Failed to register: " + err);
+          console.error("CA서버에 회원을 등록하지 못했습니다. " + err);
           if (err.toString().indexOf("Authorization") > -1) {
             console.error(
               "DogDoq-Network를 다시 실행해주세요..\n" +

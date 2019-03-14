@@ -27,5 +27,5 @@ router.post("/user4/query", query.org4); //기관 4 데이터 조회
 app.use("/api", router);
 
 app.listen(3001, () => {
-  console.log("DogDoq server listening on port 3001!");
+  console.log("DogDoq-Server 가동중...");
 });

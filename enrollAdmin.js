@@ -1,37 +1,24 @@
 "use strict";
-/*
- * Copyright IBM Corp All Rights Reserved
- *
- * SPDX-License-Identifier: Apache-2.0
- */
-/*
- * Enroll the admin user
- */
 
+//Fabric, Fabric_CA SDK와 파일 경로 설정을 위해 필요한 node module
 var Fabric_Client = require("fabric-client");
 var Fabric_CA_Client = require("fabric-ca-client");
-
 var path = require("path");
-var util = require("util");
-var os = require("os");
 
-//
 var fabric_client = new Fabric_Client();
 var fabric_ca_client = null;
 var admin_user = null;
-var member_user = null;
-var store_path = path.join(__dirname, "hfc-key-store");
+var store_path = path.join(__dirname, "인증서_펫샵");
 
-console.log(" Store path:" + store_path);
+console.log("인증서 폴더:" + store_path);
 
-// create the key value store as defined in the fabric-client/config/default.json 'key-value-store' setting
 Fabric_Client.newDefaultKeyValueStore({ path: store_path })
   .then(state_store => {
-    // assign the store to the fabric client
+    // fabric_client의 폴더 설정
     fabric_client.setStateStore(state_store);
     var crypto_suite = Fabric_Client.newCryptoSuite();
-    // use the same location for the state store (where the users' certificate are kept)
-    // and the crypto store (where the users' keys are kept)
+    
+    // fabric_client SDK가 설정해놓은 폴더에 있는 인증서 정보를 fabric_client에서 활용
     var crypto_store = Fabric_Client.newCryptoKeyStore({ path: store_path });
     crypto_suite.setCryptoKeyStore(crypto_store);
     fabric_client.setCryptoSuite(crypto_suite);
@@ -40,30 +27,33 @@ Fabric_Client.newDefaultKeyValueStore({ path: store_path })
       verify: false,
       rejectUnauthorized: false
     };
-    // be sure to change the http to https when the CA is running TLS enabled
+    // 펫샵 CA와 연결.
     fabric_ca_client = new Fabric_CA_Client(
       "https://0.0.0.0:7054",
       tlsOptions,
       "ca-org1",
       crypto_suite
     );
-    // first check to see if the admin is already enrolled
+    // 관리자가 등록되었는지 확인.
     return fabric_client.getUserContext("admin", true);
   })
   .then(user_from_store => {
     if (user_from_store && user_from_store.isEnrolled()) {
-      console.log("Successfully loaded admin from persistence");
+      console.log("CA 서버 관리자를 성공적으로 로드했습니다.");
       admin_user = user_from_store;
       return null;
     } else {
-      // need to enroll it with CA server
+      // CA 서버에 관리자를 등록. 
       return fabric_ca_client
         .enroll({
           enrollmentID: "admin",
           enrollmentSecret: "adminpw"
         })
         .then(enrollment => {
-          console.log('Successfully enrolled admin user "admin"');
+          console.log("관리자가 admin 이라는 ID로 등록되었습니다.");
+
+          // 비밀정보를 이용하여 관리자의 저장소에 인증서 생성
+          // 펫샵의 관리자이므로 Org1의 MSP 부여
           return fabric_client.createUser({
             username: "admin",
             mspid: "Org1MSP",
@@ -79,19 +69,19 @@ Fabric_Client.newDefaultKeyValueStore({ path: store_path })
         })
         .catch(err => {
           console.error(
-            "Failed to enroll and persist admin. Error: " + err.stack
+            "관리자 등록에 실패했습니다. " + err.stack
               ? err.stack
               : err
           );
-          throw new Error("Failed to enroll admin");
+          throw new Error("관리자 등록에 실패했습니다. ");
         });
     }
   })
   .then(() => {
     console.log(
-      "Assigned the admin user to the fabric client ::" + admin_user.toString()
+      "관리자가 펫샵의 CA 서버를 관리하게 되었습니다. ::"
     );
   })
   .catch(err => {
-    console.error("Failed to enroll admin: " + err);
+    console.error("관리자 등록에 실패했습니다.: " + err);
   });
