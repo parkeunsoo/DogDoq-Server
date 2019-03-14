@@ -1,11 +1,10 @@
 exports.register = function(req, res) {
-  console.log("req", req.body);
-  var msp;
+ 
   var Fabric_Client = require("fabric-client");
   var Fabric_CA_Client = require("fabric-ca-client");
   var path = require("path");
-  var util = require("util");
-  var os = require("os");
+
+  var msp;
   if (req.body.kind == "user4") {
     var users = {
       email: req.body.email,
@@ -35,6 +34,7 @@ exports.register = function(req, res) {
   var fabric_ca_client = null;
   var admin_user = null;
   var member_user = null;
+  // 로컬 DB 사용 (mysql)
   var mysql = require("mysql");
   var connection = mysql.createPool({
     connectionLimit: 10,
@@ -43,6 +43,7 @@ exports.register = function(req, res) {
     password: "qwer1689",
     database: "dogdoq_login_db"
   });
+  // 사용자의 소속(기관)에 따라 다른 DB에 회원정보 저장 
   connection.query("INSERT INTO " + req.body.kind + " SET ?", users, function(
     error,
     results
@@ -54,14 +55,13 @@ exports.register = function(req, res) {
         failed: "error ocurred"
       });
     } else {
-      console.log("The solution is: ", results);
+      console.log("결과는:",results);
       Fabric_Client.newDefaultKeyValueStore({ path: store_path })
         .then(state_store => {
-          // assign the store to the fabric client
+        // fabric-client의 폴더 설정
           fabric_client.setStateStore(state_store);
           var crypto_suite = Fabric_Client.newCryptoSuite();
-          // use the same location for the state store (where the users' certificate are kept)
-          // and the crypto store (where the users' keys are kept)
+        // fabric-client SDK가 설정해놓은 폴더에 회원의 인증서를 담을 수 있도록 설정
           var crypto_store = Fabric_Client.newCryptoKeyStore({
             path: store_path
           });
@@ -71,7 +71,7 @@ exports.register = function(req, res) {
             trustedRoots: [],
             verify: false
           };
-          // be sure to change the http to https when the CA is running TLS enabled
+          // 사용자의 소속(기관)에 따라 CA에 등록할 MSP를 다르게 부여
           if (msp == "Org1MSP") {
             fabric_ca_client = new Fabric_CA_Client(
               "https://localhost:7054",
@@ -101,19 +101,17 @@ exports.register = function(req, res) {
               crypto_suite
             );
           }
-          // first check to see if the admin is already enrolled
+          // CA 서버 관리자가 등록 됐는지 확인.
           return fabric_client.getUserContext("admin", true);
         })
         .then(user_from_store => {
           if (user_from_store && user_from_store.isEnrolled()) {
-            console.log("Successfully loaded admin from persistence");
+            console.log("CA 서버 관리자를 성공적으로 로드했습니다.");
             admin_user = user_from_store;
           } else {
-            throw new Error("Failed to get admin.... run enrollAdmin.js");
+            throw new Error("CA 서버 관리자를 등록해주세요.");
           }
-
-          // at this point we should have the admin user
-          // first need to register the user with the CA server
+          // 관리자의 권한으로 CA 서버에 회원을 등록.
           return fabric_ca_client.register(
             {
               enrollmentID: req.body.email,
@@ -124,11 +122,10 @@ exports.register = function(req, res) {
           );
         })
         .then(secret => {
-          // next we need to enroll the user with CA server
           console.log(
             "Successfully registered " + req.body.email + "- secret:" + secret
           );
-
+          // CA 서버에서 회원 비밀정보를 발급
           return fabric_ca_client.enroll({
             enrollmentID: req.body.email,
             enrollmentSecret: secret
@@ -138,6 +135,7 @@ exports.register = function(req, res) {
           console.log(
             "Successfully enrolled member user" + req.body.email + msp
           );
+          // 비밀정보를 이용하여 회원의 저장소에 인증서 생성
           return fabric_client.createUser({
             username: req.body.email,
             mspid: msp,
@@ -154,15 +152,14 @@ exports.register = function(req, res) {
         })
         .then(() => {
           console.log(
-            req.body.email+" was successfully registered and enrolled and is ready to interact with the fabric network"
+            req.body.email+" was successfully registered and enrolled and is ready to interact with the DogDoq-Network"
           );
         })
         .catch(err => {
           console.error("Failed to register: " + err);
           if (err.toString().indexOf("Authorization") > -1) {
             console.error(
-              "Authorization failures may be caused by having admin credentials from a previous CA instance.\n" +
-                "Try again after deleting the contents of the store directory " +
+              "DogDoq-Network를 다시 실행해주세요..\n" +
                 store_path
             );
           }
@@ -320,58 +317,4 @@ exports.ownerregister = function(req, res) {
       }
     }
   );
-};
-exports.mydog = function(req, res) {
-  var mysql = require("mysql");
-  var connection = mysql.createPool({
-    connectionLimit: 10,
-    host: "localhost",
-    user: "root",
-    password: "qwer1689",
-    database: "dogdoq_dog_db"
-  });
-  connection.query(
-    "SELECT * FROM dog WHERE email= ?",
-    [req.body.email],
-    function(error, results) {
-      if (error) {
-        console.log("error ocurred", error);
-        res.send({
-          code: 400,
-          failed: "error ocurred"
-        });
-      } else {
-        res.send({
-          code: 200,
-          success: "dog register sucessfull",
-          result: results
-        });
-      }
-    }
-  );
-};
-exports.alldog = function(req, res) {
-  var mysql = require("mysql");
-  var connection = mysql.createPool({
-    connectionLimit: 10,
-    host: "localhost",
-    user: "root",
-    password: "qwer1689",
-    database: "dogdoq_dog_db"
-  });
-  connection.query("SELECT * FROM dog;", function(error, results) {
-    if (error) {
-      console.log("error ocurred", error);
-      res.send({
-        code: 400,
-        failed: "error ocurred"
-      });
-    } else {
-      res.send({
-        code: 200,
-        success: "dog register sucessfull",
-        result: results
-      });
-    }
-  });
 };
