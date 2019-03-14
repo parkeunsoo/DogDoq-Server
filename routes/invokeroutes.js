@@ -426,7 +426,7 @@ exports.org2 = function(req, res) {
         var sendPromise = channel.sendTransaction(request);
         promises.push(sendPromise); //we want the send transaction first, so that we know where to check status
 
-        // peer1의 정보를 통해 event_hub에 접근
+        // peer2의 정보를 통해 event_hub에 접근
         let event_hub = channel.newChannelEventHub(peer2);
 
         // transaction이 30초안에 처리 되지 않으면 연결이 끊킴
@@ -668,7 +668,7 @@ exports.org3 = function(req, res) {
         var sendPromise = channel.sendTransaction(request);
         promises.push(sendPromise); //we want the send transaction first, so that we know where to check status
 
-        // peer1의 정보를 통해 event_hub에 접근
+        // peer3의 정보를 통해 event_hub에 접근
         let event_hub = channel.newChannelEventHub(peer3);
 
         // transaction이 30초안에 처리 되지 않으면 연결이 끊킴
