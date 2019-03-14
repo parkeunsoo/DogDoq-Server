@@ -1,8 +1,10 @@
+//Fabric SDK와 파일 경로 설정을 위해 필요한 node module
 var Fabric_Client = require("fabric-client");
 var path = require("path");
 var fs = require("fs");
-
 var fabric_client = new Fabric_Client();
+
+// 각 피어의 생성과 노드간 TLS통신을 위한 피어의 TLS인증서 경로설정
 var capeer1Path =
   "../DogDoq-Network/crypto-config/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/tls/ca.crt";
 let data1 = fs.readFileSync(capeer1Path);
@@ -35,11 +37,14 @@ var peer4 = fabric_client.newPeer("grpcs://0.0.0.0:10051", {
   pem: capeer4,
   "ssl-target-name-override": "peer0.org4.example.com:10051"
 });
+
+// 채널 4개 생성
 var channel1 = fabric_client.newChannel("channel1");
 var channel2 = fabric_client.newChannel("channel2");
 var channel3 = fabric_client.newChannel("channel3");
 var channel4 = fabric_client.newChannel("channel4");
 
+// 채널에 피어 4개의 각 채널 가입, 오더러의 각 채널 참여
 channel1.addPeer(peer1);
 channel1.addPeer(peer2);
 channel2.addPeer(peer1);
@@ -51,6 +56,7 @@ channel3.addPeer(peer4);
 channel4.addPeer(peer1);
 channel4.addPeer(peer4);
 
+// 로컬 데이터베이스와 연결
 var mysql = require("mysql");
 var connection = mysql.createPool({
   connectionLimit: 10,
@@ -60,8 +66,11 @@ var connection = mysql.createPool({
   database: "dogdoq_dog_db"
 });
 
+// 강아지의 현재 문서버전을 할당할 변수 선언
 var healthver;
 var medicalver;
+
+// 펫샵 query
 exports.org1 = function(req, res) {
   connection.query("SELECT * FROM dog WHERE id = ?", [req.body.dogId], function(
     error,
@@ -69,47 +78,46 @@ exports.org1 = function(req, res) {
     fields
   ) {
     if (error) {
-      // console.log("error ocurred", error);
       console.error(error);
       res.send({
         code: 400,
         failed: "error ocurred"
       });
     } else {
-      // console.log('The solution is: ', results);
       if (results.length > 0) {
         medicalver = String(results[0].medical);
         healthver = String(results[0].healthcare);
       }
     }
   });
-  var store_path = path.join(__dirname, "../hfc-key-store");
+  var store_path = path.join(__dirname, "../인증서_펫샵");
   Fabric_Client.newDefaultKeyValueStore({ path: store_path })
     .then(state_store => {
-      // assign the store to the fabric client
+      // fabric_client의 폴더 설정
       fabric_client.setStateStore(state_store);
       var crypto_suite = Fabric_Client.newCryptoSuite();
-      // use the same location for the state store (where the users' certificate are kept)
-      // and the crypto store (where the users' keys are kept)
+
+      // fabric_client SDK가 설정해놓은 폴더에 있는 인증서 정보를 fabric_client에서 활용
       var crypto_store = Fabric_Client.newCryptoKeyStore({ path: store_path });
       crypto_suite.setCryptoKeyStore(crypto_store);
       fabric_client.setCryptoSuite(crypto_suite);
 
-      // get the enrolled user from persistence, this user will sign all requests
+      // 유저에 대한 인증서 정보가 있다면 request에 sign을 함
       return fabric_client.getUserContext(req.body.email, true);
     })
     .then(user_from_store => {
       if (user_from_store && user_from_store.isEnrolled()) {
         console.log(
-          "Successfully loaded " + req.body.email + " from persistence"
+          req.body.email+" 님의 정보가 인증되었습니다." 
         );
         member_user = user_from_store;
       } else {
         throw new Error(
-          "Failed to get " + req.body.email + " .... run registerUser.js"
+          "펫샵의 회원이 아닙니다."
         );
       }
-
+      // 사용자의 요청(req.body.function)에 따라 Transaction에 담을 request 객체 생성
+      // 요청에 따라 채널과 체인코드가 다르게 설정됨.
       if (req.body.function == "querySales") {
         var request = {
           chaincodeId: "channel4",
@@ -168,18 +176,18 @@ exports.org1 = function(req, res) {
         channel = channel3;
       }
 
-      // send the query proposal to the peer
+      // 연결된 peer에게 쿼리 요청 전달.
       return channel.queryByChaincode(request);
     })
     .then(query_responses => {
-      console.log("Query has completed, checking results");
+      console.log("쿼리에 성공하셨습니다. 결과를 확인하세요");
 
-      // query_responses could have more than one  results if there multiple peers were used as targets
+      // 쿼리에 대한 응답.
       if (query_responses) {
         if (query_responses[0] instanceof Error) {
-          console.error("error from query = ", query_responses[0]);
+          console.error("쿼리에 에러가 발생했습니다. = ", query_responses[0]);
         } else {
-          console.log("Response is ", query_responses[0].toString());
+          console.log("쿼리에 대한 응답:  ", query_responses[0].toString());
           res.send({
             code: 200,
             success: "query completed sucessfully",
@@ -187,14 +195,14 @@ exports.org1 = function(req, res) {
           });
         }
       } else {
-        console.log("No payloads were returned from query");
+        console.log("요청하신 데이터가 존재하지 않습니다.");
       }
     })
     .catch(err => {
-      console.error("Failed to query successfully :: " + err);
+      console.error("쿼리에 실패하였습니다. :: " + err);
     });
 };
-
+// 농장 query
 exports.org2 = function(req, res) {
   connection.query("SELECT * FROM dog WHERE id = ?", [req.body.dogId], function(
     error,
@@ -202,46 +210,46 @@ exports.org2 = function(req, res) {
     fields
   ) {
     if (error) {
-      // console.log("error ocurred", error);
       console.error(error);
       res.send({
         code: 400,
         failed: "error ocurred"
       });
     } else {
-      // console.log('The solution is: ', results);
       if (results.length > 0) {
         medicalver = String(results[0].medical);
         healthver = String(results[0].healthcare);
       }
     }
   });
-  var store_path = path.join(__dirname, "../hfc-key-store2");
+  var store_path = path.join(__dirname, "../인증서_농장");
   Fabric_Client.newDefaultKeyValueStore({ path: store_path })
     .then(state_store => {
-      // assign the store to the fabric client
+      // fabric-client의 폴더 설정
       fabric_client.setStateStore(state_store);
       var crypto_suite = Fabric_Client.newCryptoSuite();
-      // use the same location for the state store (where the users' certificate are kept)
-      // and the crypto store (where the users' keys are kept)
+
+      // fabric-client SDK가 설정해놓은 폴더에 있는 인증서 정보를 fabric_client에서 활용
       var crypto_store = Fabric_Client.newCryptoKeyStore({ path: store_path });
       crypto_suite.setCryptoKeyStore(crypto_store);
       fabric_client.setCryptoSuite(crypto_suite);
 
-      // get the enrolled user from persistence, this user will sign all requests
+      // 유저에 대한 인증서 정보가 있다면 request에 sign을 함. 
       return fabric_client.getUserContext(req.body.email, true);
     })
     .then(user_from_store => {
       if (user_from_store && user_from_store.isEnrolled()) {
         console.log(
-          "Successfully loaded " + req.body.email + " from persistence"
+          req.body.email+" 님의 정보가 인증되었습니다." 
         );
         member_user = user_from_store;
       } else {
         throw new Error(
-          "Failed to get " + req.body.email + ".... run registerUser.js"
+          "농장의 회원이 아닙니다."
         );
       }
+      // 사용자의 요청(req.body.function)에 따라 Transaction에 담을 request 객체 생성
+      // 요청에 따라 채널과 체인코드가 다르게 설정됨.
       if (req.body.function == "querySales") {
         var request = {
           chaincodeId: "channel1",
@@ -292,19 +300,18 @@ exports.org2 = function(req, res) {
         };
         channel = channel3;
       }
-      // send the query proposal to the peer
+     // 연결된 peer에게 쿼리 요청 전달
       return channel.queryByChaincode(request);
     })
     .then(query_responses => {
-      console.log("Query has completed, checking results");
-      console.log(query_responses);
+      console.log("쿼리에 성공하셨습니다. 결과를 확인하세요");
 
-      // query_responses could have more than one  results if there multiple peers were used as targets
+      // 쿼리에 대한 응답.
       if (query_responses) {
         if (query_responses[0] instanceof Error) {
-          console.error("error from query = ", query_responses[0]);
+          console.error("쿼리에 에러가 발생했습니다. = ", query_responses[0]);
         } else {
-          console.log("Response is ", query_responses[0].toString());
+          console.log("쿼리에 대한 응답: ", query_responses[0].toString());
           res.send({
             code: 200,
             success: "query completed sucessfully",
@@ -312,14 +319,14 @@ exports.org2 = function(req, res) {
           });
         }
       } else {
-        console.log("No payloads were returned from query");
+        console.log("요청하신 데이터가 존재하지 않습니다.");
       }
     })
     .catch(err => {
-      console.error("Failed to query successfully :: " + err);
+      console.error("쿼리에 실패하였습니다. :: " + err);
     });
 };
-
+// 병원 query
 exports.org3 = function(req, res) {
   connection.query("SELECT * FROM dog WHERE id = ?", [req.body.dogId], function(
     error,
@@ -327,47 +334,46 @@ exports.org3 = function(req, res) {
     fields
   ) {
     if (error) {
-      // console.log("error ocurred", error);
       console.error(error);
       res.send({
         code: 400,
         failed: "error ocurred"
       });
     } else {
-      // console.log('The solution is: ', results);
       if (results.length > 0) {
         medicalver = String(results[0].medical);
         healthver = String(results[0].healthcare);
       }
     }
   });
-  var store_path = path.join(__dirname, "../hfc-key-store3");
+  var store_path = path.join(__dirname, "../인증서_병원");
   Fabric_Client.newDefaultKeyValueStore({ path: store_path })
     .then(state_store => {
-      // assign the store to the fabric client
+      // fabric-client의 폴더 설정
       fabric_client.setStateStore(state_store);
       var crypto_suite = Fabric_Client.newCryptoSuite();
-      // use the same location for the state store (where the users' certificate are kept)
-      // and the crypto store (where the users' keys are kept)
+      
+      // fabric-client SDK가 설정해놓은 폴더에 있는 인증서 정보를 fabric_client에서 활용
       var crypto_store = Fabric_Client.newCryptoKeyStore({ path: store_path });
       crypto_suite.setCryptoKeyStore(crypto_store);
       fabric_client.setCryptoSuite(crypto_suite);
 
-      // get the enrolled user from persistence, this user will sign all requests
+      // 유저에 대한 인증서 정보가 있다면 request에 sign을 함 
       return fabric_client.getUserContext(req.body.email, true);
     })
     .then(user_from_store => {
       if (user_from_store && user_from_store.isEnrolled()) {
         console.log(
-          "Successfully loaded " + req.body.email + "from persistence"
+          req.body.email+" 님의 정보가 인증되었습니다." 
         );
         member_user = user_from_store;
       } else {
         throw new Error(
-          "Failed to get " + req.body.email + " .... run registerUser.js"
+          "병원의 회원이 아닙니다."
         );
       }
-
+      // 사용자의 요청(req.body.function)에 따라 Transaction에 담을 request 객체 생성
+      // 요청에 따라 채널과 체인코드가 다르게 설정됨.
       if (req.body.function == "queryReceipt") {
         var request = {
           chaincodeId: "channel2",
@@ -411,18 +417,18 @@ exports.org3 = function(req, res) {
         };
         channel = channel3;
       }
-      // send the query proposal to the peer
+      // 연결된 peer에게 쿼리 요청 전달
       return channel.queryByChaincode(request);
     })
     .then(query_responses => {
-      console.log("Query has completed, checking results");
+      console.log("쿼리에 성공하셨습니다. 결과를 확인하세요");
 
-      // query_responses could have more than one  results if there multiple peers were used as targets
+      // 쿼리에 대한 응답.
       if (query_responses) {
         if (query_responses[0] instanceof Error) {
-          console.error("error from query = ", query_responses[0]);
+          console.error("쿼리에 에러가 발생했습니다. = ", query_responses[0]);
         } else {
-          console.log("Response is ", query_responses[0].toString());
+          console.log("쿼리에 대한 응답: ", query_responses[0].toString());
           res.send({
             code: 200,
             success: "query completed sucessfully",
@@ -430,11 +436,11 @@ exports.org3 = function(req, res) {
           });
         }
       } else {
-        console.log("No payloads were returned from query");
+        console.log("요청하신 데이터가 존재하지 않습니다.");
       }
     })
     .catch(err => {
-      console.error("Failed to query successfully :: " + err);
+      console.error("쿼리에 실패하였습니다. :: " + err);
     });
 };
 
@@ -445,47 +451,46 @@ exports.org4 = function(req, res) {
     fields
   ) {
     if (error) {
-      // console.log("error ocurred", error);
       console.error(error);
       res.send({
         code: 400,
         failed: "error ocurred"
       });
     } else {
-      // console.log('The solution is: ', results);
       if (results.length > 0) {
         medicalver = String(results[0].medical);
         healthver = String(results[0].healthcare);
       }
     }
   });
-  var store_path = path.join(__dirname, "../hfc-key-store4");
+  var store_path = path.join(__dirname, "../인증서_DogDoq");
   Fabric_Client.newDefaultKeyValueStore({ path: store_path })
     .then(state_store => {
-      // assign the store to the fabric client
+      // fabric-client의 폴더 설정
       fabric_client.setStateStore(state_store);
       var crypto_suite = Fabric_Client.newCryptoSuite();
-      // use the same location for the state store (where the users' certificate are kept)
-      // and the crypto store (where the users' keys are kept)
+
+      // fabric-client SDK가 설정해놓은 폴더에 있는 인증서 정보를 fabric_client에서 활용
       var crypto_store = Fabric_Client.newCryptoKeyStore({ path: store_path });
       crypto_suite.setCryptoKeyStore(crypto_store);
       fabric_client.setCryptoSuite(crypto_suite);
 
-      // get the enrolled user from persistence, this user will sign all requests
+      // 유저에 대한 인증서 정보가 있다면 request에 sign을 함
       return fabric_client.getUserContext(req.body.email, true);
     })
     .then(user_from_store => {
       if (user_from_store && user_from_store.isEnrolled()) {
         console.log(
-          "Successfully loaded " + req.body.email + " from persistence"
+          req.body.email+" 님의 정보가 인증되었습니다."
         );
         member_user = user_from_store;
       } else {
         throw new Error(
-          "Failed to get " + req.body.email + " .... run registerUser.js"
+          "DogDoq의 회원이 아닙니다."
         );
       }
-
+      // 사용자의 요청(req.body.function)에 따라 Transaction에 담을 request 객체 생성
+      // 요청에 따라 채널과 체인코드가 다르게 설정됨.
       if (req.body.function == "queryHealthcare") {
         var request = {
           chaincodeId: "channel3",
@@ -529,18 +534,18 @@ exports.org4 = function(req, res) {
         };
         channel = channel4;
       }
-      // send the query proposal to the peer
+      // 연결된 peer에게 쿼리 요청 전달
       return channel.queryByChaincode(request);
     })
     .then(query_responses => {
-      console.log("Query has completed, checking results");
+      console.log("쿼리에 성공하셨습니다. 결과를 확인하세요");
 
-      // query_responses could have more than one  results if there multiple peers were used as targets
+       // 쿼리에 대한 응답.
       if (query_responses) {
         if (query_responses[0] instanceof Error) {
-          console.error("error from query = ", query_responses[0]);
+          console.error("쿼리에 에러가 발생했습니다. = ", query_responses[0]);
         } else {
-          console.log("Response is ", query_responses[0].toString());
+          console.log("쿼리에 대한 응답: ", query_responses[0].toString());
           res.send({
             code: 200,
             success: "query completed sucessfully",
@@ -548,10 +553,10 @@ exports.org4 = function(req, res) {
           });
         }
       } else {
-        console.log("No payloads were returned from query");
+        console.log("요청하신 데이터가 존재하지 않습니다.");
       }
     })
     .catch(err => {
-      console.error("Failed to query successfully :: " + err);
+       console.error("쿼리에 실패하였습니다. :: " + err);
     });
 };

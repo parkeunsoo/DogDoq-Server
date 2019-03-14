@@ -4,8 +4,10 @@ var path = require("path");
 var util = require("util");
 var fs = require("fs");
 var fabric_client = new Fabric_Client();
+
 // transaction id를 할당할 변수 생성
 var tx_id = null;
+
 // 각 피어의 생성과 노드간 TLS통신을 위한 피어의 TLS인증서 경로설정
 var capeer1Path =
   "../DogDoq-Network/crypto-config/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/tls/ca.crt";
@@ -31,6 +33,7 @@ var peer3 = fabric_client.newPeer("grpcs://0.0.0.0:9051", {
   pem: capeer3,
   "ssl-target-name-override": "peer0.org3.example.com:9051"
 });
+
 // 오더러 생성과 노드간 TLS통신을 위한 오더러의 TLS인증서 경로설정
 var caordererPath =
   "../DogDoq-Network/crypto-config/ordererOrganizations/example.com/orderers/orderer.example.com/msp/tlscacerts/tlsca.example.com-cert.pem";
@@ -40,12 +43,14 @@ var order = fabric_client.newOrderer("grpcs://localhost:7050", {
   pem: caorderer,
   "ssl-target-name-override": "orderer.example.com:7050"
 });
-//  채널 4개 생성
+
+// 채널 4개 생성
 var channel;
 var channel1 = fabric_client.newChannel("channel1");
 var channel2 = fabric_client.newChannel("channel2");
 var channel3 = fabric_client.newChannel("channel3");
 var channel4 = fabric_client.newChannel("channel4");
+
 // 채널에 피어 4개의 각 채널 가입, 오더러의 각 채널 참여
 channel1.addPeer(peer1);
 channel1.addPeer(peer2);
@@ -59,6 +64,7 @@ channel1.addOrderer(order);
 channel2.addOrderer(order);
 channel3.addOrderer(order);
 channel4.addOrderer(order);
+
 // 로컬 데이터베이스와 연결
 var mysql = require("mysql");
 var connection = mysql.createPool({
@@ -68,12 +74,13 @@ var connection = mysql.createPool({
   password: "qwer1689",
   database: "dogdoq_dog_db"
 });
+
 // 강아지의 현재 문서버전을 할당할 변수 선언
 var currentmediver;
 var currenthealthver;
 
+// 펫샵 invoke
 exports.org1 = function(req, res) {
-
   if (req.body.function == "createHealthcare") {
     connection.query(
       "SELECT * FROM dog WHERE id = ?",
@@ -125,7 +132,6 @@ exports.org1 = function(req, res) {
   var store_path = path.join(__dirname, "../인증서_펫샵");
   Fabric_Client.newDefaultKeyValueStore({ path: store_path })
     .then(state_store => {
-
       // fabric_client의 폴더 설정
       fabric_client.setStateStore(state_store);
       var crypto_suite = Fabric_Client.newCryptoSuite();
@@ -141,7 +147,7 @@ exports.org1 = function(req, res) {
     .then(user_from_store => {
       if (user_from_store && user_from_store.isEnrolled()) {
         console.log(
-          req.body.email+"님의 정보가 인증되었습니다." 
+          req.body.email+" 님의 정보가 인증되었습니다." 
         );
         member_user = user_from_store;
       } else {
@@ -158,7 +164,7 @@ exports.org1 = function(req, res) {
       console.log("Assigning transaction_id: ", tx_id._transaction_id);
 
       // 사용자의 요청(req.body.function)에 따라 Transaction에 담을 request 객체 생성
-      // 요청에따라 채널과 체인코드가 다르게 설정됨.
+      // 요청에 따라 채널과 체인코드가 다르게 설정됨.
       if (req.body.function == "createPurchase") {
         var request = {
           chaincodeId: "channel1",
@@ -235,7 +241,7 @@ exports.org1 = function(req, res) {
         var promises = [];
 
         // 채널에 request를 담은 트랜잭션 전송.-> channel.sendTransaction(request)
-        // promise구문에 사용위해 보낸 트랜 잭션 정보를 push
+        // promise 구문을 사용하기위해 보낸 트랜 잭션 정보를 push
         var sendPromise = channel.sendTransaction(request);
         promises.push(sendPromise); 
 
@@ -323,6 +329,7 @@ exports.org1 = function(req, res) {
       });
     });
 };
+// 농장 invoke
 exports.org2 = function(req, res) {
   var store_path = path.join(__dirname, "../인증서_농장");
   Fabric_Client.newDefaultKeyValueStore({ path: store_path })
@@ -342,12 +349,12 @@ exports.org2 = function(req, res) {
     .then(user_from_store => {
       if (user_from_store && user_from_store.isEnrolled()) {
         console.log(
-          "Successfully loaded " + req.body.email + " from persistence"
+          req.body.email+" 님의 정보가 인증되었습니다." 
         );
         member_user = user_from_store;
       } else {
         throw new Error(
-          "Failed to get " + req.body.email + " .... run registerUser.js"
+          "농장의 회원이 아닙니다."
         );
       }
       // 현재는 MobileApplication에서 인코딩,해시작업을 진행하지만 추후에 서버로 옮길 예정
@@ -422,7 +429,7 @@ exports.org2 = function(req, res) {
         var promises = [];
 
         // 채널에 request를 담은 트랜잭션 전송.-> channel.sendTransaction(request)
-        // promise구문 사용을 위해 보낸 트랜 잭션 정보를 push
+        // promise 구문을 사용하기 위해 보낸 트랜 잭션 정보를 push
         var sendPromise = channel.sendTransaction(request);
         promises.push(sendPromise); //we want the send transaction first, so that we know where to check status
 
@@ -511,7 +518,7 @@ exports.org2 = function(req, res) {
       });
     });
 };
-
+// 병원 invoke
 exports.org3 = function(req, res) {
   if (req.body.function == "createDiagnostic") {
     connection.query(
@@ -567,6 +574,7 @@ exports.org3 = function(req, res) {
       // fabric-client의 폴더 설정
       fabric_client.setStateStore(state_store);
       var crypto_suite = Fabric_Client.newCryptoSuite();
+
       // fabric-client SDK가 설정해놓은 폴더에 있는 인증서 정보를 fabric_client에서 활용
       var crypto_store = Fabric_Client.newCryptoKeyStore({ path: store_path });
       crypto_suite.setCryptoKeyStore(crypto_store);
@@ -578,7 +586,7 @@ exports.org3 = function(req, res) {
     .then(user_from_store => {
       if (user_from_store && user_from_store.isEnrolled()) {
         console.log(
-          req.body.email+"님의 정보가 인증되었습니다." 
+          req.body.email+" 님의 정보가 인증되었습니다." 
         );
         member_user = user_from_store;
       } else {
