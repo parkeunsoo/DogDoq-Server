@@ -422,7 +422,7 @@ exports.org2 = function(req, res) {
         var promises = [];
 
         // 채널에 request를 담은 트랜잭션 전송.-> channel.sendTransaction(request)
-        // promise구문에 사용위해 보낸 트랜 잭션 정보를 push
+        // promise구문 사용을 위해 보낸 트랜 잭션 정보를 push
         var sendPromise = channel.sendTransaction(request);
         promises.push(sendPromise); //we want the send transaction first, so that we know where to check status
 
