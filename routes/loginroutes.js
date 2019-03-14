@@ -61,7 +61,7 @@ exports.register = function(req, res) {
         // fabric-client의 폴더 설정
           fabric_client.setStateStore(state_store);
           var crypto_suite = Fabric_Client.newCryptoSuite();
-        // fabric-client SDK가 설정해놓은 폴더에 회원의 인증서를 담을 수 있도록 설정
+        // fabric-client SDK가 설정해놓은 폴더에 있는 인증서 정보를 fabric_client에서 활용
           var crypto_store = Fabric_Client.newCryptoKeyStore({
             path: store_path
           });
@@ -212,106 +212,6 @@ exports.login = function(req, res) {
           res.send({
             code: 204,
             success: "Email does not exists"
-          });
-        }
-      }
-    }
-  );
-};
-
-exports.dogregister = function(req, res) {
-  var mysql = require("mysql");
-  var connection = mysql.createPool({
-    connectionLimit: 10,
-    host: "localhost",
-    user: "root",
-    password: "qwer1689",
-    database: "dogdoq_dog_db"
-  });
-
-  var dogs = {
-    id: req.body.dogId,
-    medical: 0,
-    healthcare: 0,
-    email: "미분양"
-  };
-  connection.query("INSERT INTO dog SET ?", dogs, function(error, results) {
-    if (error) {
-      console.log("error ocurred", error);
-      res.send({
-        code: 400,
-        failed: "error ocurred"
-      });
-    } else {
-      res.send({
-        code: 200,
-        success: "dog register sucessfull"
-      });
-    }
-  });
-};
-exports.ownerregister = function(req, res) {
-  var mysql = require("mysql");
-  var connection = mysql.createPool({
-    connectionLimit: 10,
-    host: "localhost",
-    user: "root",
-    password: "qwer1689",
-    database: "dogdoq_dog_db"
-  });
-  var connection2 = mysql.createPool({
-    connectionLimit: 10,
-    host: "localhost",
-    user: "root",
-    password: "qwer1689",
-    database: "dogdoq_login_db"
-  });
-  connection2.query(
-    "SELECT * FROM user4 WHERE email = ?",
-    [req.body.owner],
-    function(error, results, fields) {
-      if (error) {
-        console.error(error);
-        res.send({
-          code: 400,
-          failed: "error ocurred"
-        });
-      } else {
-        if (results.length > 0) {
-          connection.query(
-            "UPDATE dog SET email= ? WHERE id = ?",
-            [req.body.owner, req.body.dogId],
-            function(error, results) {
-              if (error) {
-                console.log("error ocurred", error);
-                res.send({
-                  code: 400,
-                  failed: "error ocurred"
-                });
-              } else {
-                if (results.affectedRows > 0) {
-                  res.send({
-                    code: 200,
-                    success:
-                      "owner" +
-                      req.body.owner +
-                      "dog" +
-                      req.body.dogId +
-                      "register sucessfull"
-                  });
-                } else {
-                  res.send({
-                    code: 400,
-                    failed: "등록된 강아지가 아닙니다."
-                  });
-                }
-              }
-            }
-          );
-        } else {
-          res.send({
-            code: 400,
-            failed: "등록된 사용자가 없습니다."
           });
         }
       }
