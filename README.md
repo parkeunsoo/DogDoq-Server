@@ -12,7 +12,7 @@ Dog + Documents = <b>DOGDOQ</b>
 
  Description
  -----------
- 반려동물 분양과정 투명화를 위한 DogDoq 서버
+ 반려동물 분양과정 투명화를 위한 DOGDOQ 서버
  
  System Structure
  -----------------
