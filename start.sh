@@ -4,16 +4,16 @@ rm -rf 인증서_농장
 rm -rf 인증서_병원
 rm -rf 인증서_DogDoq
 # CA 0,1,2,3 관리자 등록
-nodejs enrollAdmin.js
+nodejs ./enroll_CA/enroll_CA1_Admin.js
 echo "펫샵 CA서버 관리자 등록완료"
 echo ""
-nodejs enrollAdmin2.js
+nodejs ./enroll_CA/enroll_CA2_Admin.js
 echo "농장 CA서버 관리자 등록완료"
 echo ""
-nodejs enrollAdmin3.js
+nodejs ./enroll_CA/enroll_CA3_Admin.js
 echo "병원 CA서버 관리자 등록완료"
 echo ""
-nodejs enrollAdmin4.js
+nodejs ./enroll_CA/enroll_CA4_Admin.js
 echo "DogDoq CA서버 관리자 등록완료"
 echo ""
 # 서버 가동 
