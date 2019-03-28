@@ -29,3 +29,14 @@ app.use("/api", router);
 app.listen(3001, () => {
   console.log("DogDoq-Server 가동중...");
 });
+
+// 변경 예정
+// router.get("auth/me")
+// router.get("auth/refresh")
+// router.post("auth/register")
+// router.post("auth/login")
+// router.post("dog/:id")//강아지 등록
+// router.get("dog/:id")//강아지의 상태 값 출력 (ID,문서버전,주인 ID)
+// rotuer.get("dog/:id/:document")
+// rotuer.post("dog/:id/:document")
+// router.get("user/dog/:id")// 자신의 강아지 출력
